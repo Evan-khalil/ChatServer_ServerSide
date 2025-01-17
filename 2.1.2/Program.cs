@@ -41,6 +41,15 @@ namespace _2._1._2
                 OnlineClients.Add(tcpClient);
                 Thread _thread = new Thread(new ParameterizedThreadStart(NewClient));
                 _thread.Start(tcpClient);
+                for (int j = OnlineClients.Count - 1; j >= 0; j--)
+                {
+                    if (SocketConnected(OnlineClients[j].Client) == false)
+                    {
+                        Console.WriteLine("Client " + GetIpAddress(OnlineClients[j]) + " has been disconnected \r\n");
+                        OnlineClients.RemoveAt(j);
+                        Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
+                    }
+                }
             }
         }
         public static void NewClient(object obj)
@@ -52,15 +61,7 @@ namespace _2._1._2
                 int i;
                 try
                 {
-                    for (int j = OnlineClients.Count - 1; j >= 0; j--)
-                    {
-                        if (SocketConnected(OnlineClients[j].Client) == false)
-                        {
-                            Console.WriteLine("Client " + GetIpAddress(OnlineClients[j]) + " has been disconnected \r\n");
-                            OnlineClients.RemoveAt(j);
-                            Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
-                        }
-                    }
+
                     while ((i = tcpClient.GetStream().Read(bytesBuffer, 0, bytesBuffer.Length)) != 0)
                     {
                         string recievedData = GetIpAddress(tcpClient) + " : " + Encoding.ASCII.GetString(bytesBuffer, 0, i);
