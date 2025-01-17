@@ -37,10 +37,6 @@ namespace _2._1._2
                 Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
                 Console.Write("Waiting for a connection... \r\n");
                 TcpClient tcpClient = server.AcceptTcpClientAsync().Result;
-                Console.WriteLine("Client connected with IP: " + GetIpAddress(tcpClient));
-                OnlineClients.Add(tcpClient);
-                Thread _thread = new Thread(new ParameterizedThreadStart(NewClient));
-                _thread.Start(tcpClient);
                 for (int j = OnlineClients.Count - 1; j >= 0; j--)
                 {
                     if (SocketConnected(OnlineClients[j].Client) == false)
@@ -50,6 +46,11 @@ namespace _2._1._2
                         Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
                     }
                 }
+                Console.WriteLine("Client connected with IP: " + GetIpAddress(tcpClient));
+                OnlineClients.Add(tcpClient);
+                Thread _thread = new Thread(new ParameterizedThreadStart(NewClient));
+                _thread.Start(tcpClient);
+
             }
         }
         public static void NewClient(object obj)
