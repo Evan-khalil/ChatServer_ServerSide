@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -8,8 +9,10 @@ namespace _2._1._2
 {
     internal class Program
     {
+
         private static int Port;
         private static readonly List<TcpClient> OnlineClients = new List<TcpClient>();
+
         private static void Main(string[] args)
         {
             Console.WriteLine("Ange Port eller klick för att starta servern på default port(2000)");
@@ -22,9 +25,11 @@ namespace _2._1._2
             {
                 Port = 2000;
             }
-            TcpListener tcpListener = new TcpListener(Port);
+            TcpListener tcpListener = new TcpListener(IPAddress.Any,Port);
             Thread _thread = new Thread(new ParameterizedThreadStart(NewServer));
             _thread.Start(tcpListener);
+            Thread _clientThread = new Thread(new ThreadStart(ClientDisconnected));
+            _clientThread.Start();
         }
         public static void NewServer(object obj)
         {
@@ -37,20 +42,30 @@ namespace _2._1._2
                 Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
                 Console.Write("Waiting for a connection... \r\n");
                 TcpClient tcpClient = server.AcceptTcpClientAsync().Result;
-                for (int j = OnlineClients.Count - 1; j >= 0; j--)
-                {
-                    if (SocketConnected(OnlineClients[j].Client) == false)
-                    {
-                        Console.WriteLine("Client " + GetIpAddress(OnlineClients[j]) + " has been disconnected \r\n");
-                        OnlineClients.RemoveAt(j);
-                        Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
-                    }
-                }
+
                 Console.WriteLine("Client connected with IP: " + GetIpAddress(tcpClient));
                 OnlineClients.Add(tcpClient);
+                
                 Thread _thread = new Thread(new ParameterizedThreadStart(NewClient));
                 _thread.Start(tcpClient);
 
+            }
+        }
+        public static void ClientDisconnected()
+        {
+            while (true)
+            {
+                for (int i = 0; i < OnlineClients.Count; i++)
+                {
+
+                    if (SocketConnected(OnlineClients[i].Client) == false)
+                    {
+                        Console.WriteLine("Client " + GetIpAddress(OnlineClients[i]) + " has been disconnected \r\n");
+                        OnlineClients.Remove(OnlineClients[i]);
+                        Console.WriteLine("Online clients:" + OnlineClients.Count + "\r\n");
+
+                    }
+                }
             }
         }
         public static void NewClient(object obj)
@@ -62,7 +77,7 @@ namespace _2._1._2
                 int i;
                 try
                 {
-
+                        
                     while ((i = tcpClient.GetStream().Read(bytesBuffer, 0, bytesBuffer.Length)) != 0)
                     {
                         string recievedData = GetIpAddress(tcpClient) + " : " + Encoding.ASCII.GetString(bytesBuffer, 0, i);
@@ -80,6 +95,7 @@ namespace _2._1._2
                 }
             }
         }
+
         public static string GetLocalIPAddress()
         {
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
